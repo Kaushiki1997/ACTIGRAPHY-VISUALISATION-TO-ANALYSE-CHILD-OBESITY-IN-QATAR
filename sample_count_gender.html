@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<meta charset="utf-8">
+<style>
+#chart svg {
+  height: 400px;
+  width: 800px;
+}
+</style>
+<link rel="stylesheet" type="text/css" href="https://cdnjs.cloudflare.com/ajax/libs/nvd3/1.8.1/nv.d3.min.css">
+<script src="http://d3js.org/d3.v3.min.js"></script>
+<script src="http://cdn.rawgit.com/novus/nvd3/v1.8.1/build/nv.d3.min.js"></script>
+<script src="http://cdn.jsdelivr.net/jstat/1.5.2/jstat.min.js"></script>
+<body>
+<div id="chart">
+  <svg></svg>
+</div>
+<script>
+//based off http://nvd3.org/examples/linePlusBar.html and http://bl.ocks.org/daluu/f58884c24ff893186416
+//tweaked with help from http://stackoverflow.com/questions/35264069/adapting-nvd3-lineplusbarchart-to-a-histogram-with-cumulative-percentage-line
+var finalDataset = null; //for debugging in JS console
+
+//define margins for chart, histogram bin size, and the x scale for the bins
+var m = {top: 30, right: 60, bottom: 50, left: 70}
+  , h = 400 - m.top - m.bottom
+  , w = 800 - m.left - m.right
+  , numBins = 50;
+var x = d3.scale.linear().domain([0, 50]).range([0, w]);
+
+
+/*var dataset = [2.4059769174850905,
+2.7600000000000002,
+3.8217080187144488,
+2.3899284588203313,
+3.7264403738739054,
+7.63,
+3.16,
+3.1600000000000006,
+3.160000000000001,
+2.06,
+1.9728802107932477,
+1.7180599494369857,
+1.747203022782844,
+2.39,
+2.06,
+2.06];*/          var dataset1=[16,
+30,
+29,
+28,
+13,
+19,
+17,
+25,
+31,
+20,
+21,
+22,
+16,
+26,
+19,
+15,
+26,
+17,
+20,
+24,
+20,
+21,
+23,
+17,
+19,
+20,
+25,
+23,
+16,
+17,
+21,
+18,
+22,
+19,
+31,
+17,
+17,
+17,
+18,
+22,
+24,
+17,
+23,
+16,
+21,
+21,
+16,
+16,
+18,
+18,
+22,
+22,
+14,
+18,
+21,
+17,
+20,
+15,
+28,
+19,
+16,
+28,
+19,
+28,
+15,
+15,
+26,
+33,
+34,
+22,
+19,
+18,
+17,
+20,
+30,
+17,
+29,
+21,
+17,
+22,
+22,
+18,
+16,
+28,
+22,
+31,
+28,
+21,
+24,
+19,
+20,
+26,
+29,
+20,
+28,
+22,
+22,
+22,
+26,
+13,
+26,
+15,
+22,
+18,
+25,
+18,
+16,
+18,
+13,
+19,
+24,
+38,
+17,
+27,
+30,
+24,
+17,
+17,
+19,
+20,
+28,
+24,
+15,
+21,
+25,
+30,
+18,
+17,
+18,
+18,
+22,
+17,
+15,
+19,
+12,
+20,
+16,
+20,
+19,
+17,
+20,
+25,
+19,
+27,
+26,
+15,
+18,
+16,
+21,
+18,
+37,
+18,
+21,
+21,
+32,
+17];
+
+var dataset2=[21,21,31,42,17,
+18,
+17,
+21,
+20,
+28,
+26,
+15,
+20,
+28,
+15,
+22,
+19,
+18,
+29,
+22,
+22,
+28,
+20,
+26,
+16,
+29,
+17,
+26,
+16,
+28,
+20,
+33,
+22,
+19,
+18,
+31,
+21,
+16,
+24,
+15,
+22,
+21,
+31,
+24,
+18,
+17,
+22,
+17,
+15,
+13,
+19,
+20,
+20,
+16,
+20,
+17];
+
+  binData1 = d3.layout.histogram().bins(x.ticks(numBins))(dataset1);
+ binData2 = d3.layout.histogram().bins(x.ticks(numBins))(dataset2);
+  var convertedData = [];
+  
+  var countObj2 = {'key': 'Female', 'bar': true, 'color': '#303', 'values': []};
+  var countObj1 = {'key': 'Male' ,'bar': true, 'color': '#ccf', 'values': []};
+ 
+  //var cdfObj = {'key': 'CDF', 'color': '#333', 'values': []};
+  for(var i = 0; i < binData1.length; i++){
+    countObj1.values.push([binData1[i].x,binData1[i].y]);
+    //countObj2.values.push([binData2[i].x,binData2[i].y]);
+    //cdfObj.values.push([binData[i].x,jstat.normal(jstat.mean(), jstat.stdev()).cdf(binData[i].x)]);
+  }
+   
+  for(var i = 0; i < binData2.length; i++){
+    countObj2.values.push([binData2[i].x,binData2[i].y]);
+    //countObj2.values.push([binData2[i].x,binData2[i].y]);
+    //cdfObj.values.push([binData[i].x,jstat.normal(jstat.mean(), jstat.stdev()).cdf(binData[i].x)]);
+  }
+      
+//countObj2.values.push([20,1]);
+  convertedData.push(countObj1);
+  convertedData.push(countObj2);
+ // convertedData.push(cdfObj);
+  var data = convertedData;
+  finalDataset = data;
+
+  nv.addGraph(function() {
+      var chart = nv.models.multiBarChart()
+            .margin({top: m.top, right: m.right, bottom: m.bottom, left: m.left})
+            .width(1000)
+            //We can set x data accessor to use index. Reason? So the bars all appear evenly spaced.
+            .x(function(d,i) { return d[0] })
+            .y(function(d,i) {return d[1] })
+            //.focusEnable(false)
+            //.barColor(d3.scale.category20().range())
+            .duration(300)
+            //.rotateLabels(45)
+            .groupSpacing(0.1)
+            .tooltips(true)
+            .reduceXTicks(false)
+        ;
+  chart.legend.margin({top: 10, right: 200, left: 0, bottom: 20});
+      
+      chart.xAxis.tickFormat(function(d) {
+        return d
+      });
+      chart.xAxis.ticks(data[0].values.length)
+      chart.xAxis.axisLabel('BMI');
+
+      chart.yAxis
+          .tickFormat(d3.format(',f'))
+          .axisLabel('No. of Children');
+
+      //chart.bars.forceY([0]);
+
+      d3.select('#chart svg')
+        .datum(data)
+        .transition()
+        .duration(0)
+        .call(chart);
+
+      nv.utils.windowResize(chart.update);
+
+      return chart;
+  });
+</script>
+</body>
